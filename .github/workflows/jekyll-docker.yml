@@ -1,0 +1,39 @@
+
+import random
+
+print("🎮 مرحبًا بك في لعبة تخمين الأرقام!")
+
+while True:
+    number = random.randint(1, 100)
+    attempts = 10
+    won = False
+
+    print("\nخمن رقمًا من 1 إلى 100")
+    print("لديك 10 محاولات")
+
+    while attempts > 0:
+        guess = int(input("أدخل تخمينك: "))
+        attempts -= 1
+
+        if guess == number:
+            print("🏆 مبروك! لقد فزت!")
+            print("عدد المحاولات المستخدمة:", 10 - attempts)
+            won = True
+            break
+        elif guess < number:
+            print("الرقم أكبر من تخمينك")
+        else:
+            print("الرقم أصغر من تخمينك")
+
+        print("المحاولات المتبقية:", attempts)
+
+    if not won:
+        print("انتهت المحاولات!")
+        print("الرقم الصحيح هو:", number)
+
+    again = input("هل تريد اللعب مرة أخرى؟ (نعم/لا): ")
+
+    if again.strip().lower() not in ["نعم", "ن", "yes", "y"]:
+        print("شكرًا للعب! 👋")
+        break
+
