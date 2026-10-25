@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لعبة تخمين الأرقام</title>
+<style>
+body{font-family:Arial,sans-serif;text-align:center;background:#101827;color:white;padding:25px}
+main{max-width:420px;margin:40px auto;background:#1e293b;padding:25px;border-radius:20px}
+h1{color:#38bdf8}
+input,button{font-size:18px;padding:12px;margin:8px;border-radius:10px;border:0}
+button{background:#0ea5e9;color:white;cursor:pointer}
+input{width:110px;text-align:center}
+#message{font-size:20px;margin:20px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>🎯 لعبة تخمين الأرقام</h1>
+<p>خمن رقمًا من 1 إلى 100!</p>
+<input id="guess" type="number" min="1" max="100" placeholder="رقمك">
+<button onclick="checkGuess()">خمّن</button>
+<p id="message">بالتوفيق! 😎</p>
+<p>عدد المحاولات: <span id="tries">0</span></p>
+<button onclick="restart()">لعبة جديدة 🔄</button>
+</main>
+<script>
+let answer=Math.floor(Math.random()*100)+1;
+let tries=0,finished=false;
+function checkGuess(){
+if(finished)return;
+let n=Number(document.getElementById('guess').value);
+let m=document.getElementById('message');
+if(n<1||n>100||!Number.isInteger(n)){
+m.textContent='أدخل رقمًا من 1 إلى 100';return;
+}
+tries++;
+document.getElementById('tries').textContent=tries;
+if(n===answer){m.textContent='🎉 ممتاز! خمنت الرقم الصحيح!';finished=true;}
+else if(n<answer)m.textContent='⬆️ الرقم أكبر! حاول مرة ثانية';
+else m.textContent='⬇️ الرقم أصغر! حاول مرة ثانية';
+}
+function restart(){
+answer=Math.floor(Math.random()*100)+1;
+tries=0;finished=false;
+document.getElementById('tries').textContent='0';
+document.getElementById('guess').value='';
+document.getElementById('message').textContent='بدأت لعبة جديدة! 🎮';
+}
+</script>
+</body>
+</html>
