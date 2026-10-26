@@ -1,53 +1,293 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#071326">
 <title>لعبة تخمين الأرقام</title>
 <style>
-body{font-family:Arial,sans-serif;text-align:center;background:#101827;color:white;padding:25px}
-main{max-width:420px;margin:40px auto;background:#1e293b;padding:25px;border-radius:20px}
-h1{color:#38bdf8}
-input,button{font-size:18px;padding:12px;margin:8px;border-radius:10px;border:0}
-button{background:#0ea5e9;color:white;cursor:pointer}
-input{width:110px;text-align:center}
-#message{font-size:20px;margin:20px 0}
+:root{--bg:#06101f;--panel:#101f35;--cyan:#38e8ff;--blue:#398bff;--text:#f4f8ff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:22px 14px;color:var(--text);font-family:Arial,sans-serif;text-align:center;background:radial-gradient(ellipse at top,#12315b 0%,var(--bg) 65%);transition:.3s}
+main{max-width:470px;margin:20px auto;padding:25px 18px;border:1px solid #38e8ff55;border-radius:25px;background:#101f35eF;box-shadow:0 0 35px #168cff22;animation:appear .6s ease}
+@keyframes appear{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:clamp(25px,6vw,34px);color:var(--cyan);text-shadow:0 0 18px #38e8ff66;margin:12px 0}
+.sub{color:#b7c9e5;line-height:1.7}
+.top,.stats,.actions{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.top{justify-content:space-between}
+button,select,input{font:inherit;border-radius:12px;padding:12px;border:1px solid #38e8ff55}
+button{cursor:pointer;color:white;background:linear-gradient(120deg,#1679ff,#16bed6);font-weight:bold;transition:transform .15s,filter .15s}
+button:active{transform:scale(.96)}
+button:hover{filter:brightness(1.15)}
+button.secondary,select{background:#172c48;color:white}
+select{max-width:100%}
+input{width:145px;max-width:100%;background:#071326;color:white;text-align:center;font-size:23px;outline:none}
+input:focus{border-color:var(--cyan);box-shadow:0 0 12px #38e8ff44}
+.controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0}
+.stats{margin:18px 0}
+.stat{flex:1;min-width:95px;padding:13px 6px;background:#071326;border:1px solid #ffffff12;border-radius:15px}
+.stat strong{display:block;color:var(--cyan);font-size:23px;margin-top:7px}
+#timer{color:#ffd166}
+.track{height:8px;background:#071326;border-radius:20px;overflow:hidden;margin:12px 0 20px}
+#bar{height:100%;width:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .3s}
+#message{min-height:62px;padding:16px 8px;margin:14px 0;font-size:19px;line-height:1.6;border-radius:14px;background:#071326;color:var(--cyan)}
+.actions button{min-width:120px}
+.small{font-size:12px;color:#9db2d1;margin-top:20px}
+#celebration{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.confetti{position:absolute;top:-20px;font-size:23px;animation:fall 2.4s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(700deg);opacity:0}}
+button:focus-visible,select:focus-visible{outline:2px solid white;outline-offset:3px}
 </style>
 </head>
 <body>
+<div id="celebration"></div>
 <main>
-<h1>🎯 لعبة تخمين الأرقام</h1>
-<p>خمن رقمًا من 1 إلى 100!</p>
-<input id="guess" type="number" min="1" max="100" placeholder="رقمك">
-<button onclick="checkGuess()">خمّن</button>
-<p id="message">بالتوفيق! 😎</p>
-<p>عدد المحاولات: <span id="tries">0</span></p>
-<button onclick="restart()">لعبة جديدة 🔄</button>
+  <div class="top">
+    <button class="secondary" id="langBtn" onclick="toggleLang()">EN 🌐</button>
+    <button class="secondary" id="soundBtn" onclick="toggleSound()">🔊 الصوت</button>
+  </div>
+
+  <h1 id="title">🎯 تخمين الأرقام</h1>
+  <p class="sub" id="subtitle">اختبر ذكاءك، واخمن الرقم قبل انتهاء الوقت!</p>
+
+  <div class="controls">
+    <label for="level" id="levelLabel">المستوى:</label>
+    <select id="level" onchange="newGame()">
+      <option value="easy">سهل · 1–20</option>
+      <option value="medium" selected>متوسط · 1–100</option>
+      <option value="hard">صعب · 1–500</option>
+    </select>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span id="timeLabel">الوقت</span><strong id="timer">30</strong></div>
+    <div class="stat"><span id="triesLabel">المحاولات</span><strong id="tries">0</strong></div>
+    <div class="stat"><span id="scoreLabel">النقاط</span><strong id="score">0</strong></div>
+  </div>
+
+  <div class="track"><div id="bar"></div></div>
+
+  <p id="rangeText">اختر رقمًا من 1 إلى 100</p>
+  <form id="guessForm">
+    <input id="guess" type="number" min="1" max="100" placeholder="رقمك" required>
+    <button type="submit" id="guessBtn">خمن 🚀</button>
+  </form>
+
+  <div id="message" role="status" aria-live="polite">جاهز للتحدي؟ ابدأ الآن!</div>
+
+  <div class="actions">
+    <button onclick="newGame()" id="newBtn">🔄 لعبة جديدة</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span id="bestLabel">أفضل نتيجة</span><strong id="best">0</strong></div>
+  </div>
+  <p class="small" id="footer">لعبة نيون — تحدَّ نفسك وحطّم رقمك القياسي!</p>
 </main>
+
 <script>
-let answer=Math.floor(Math.random()*100)+1;
-let tries=0,finished=false;
-function checkGuess(){
-if(finished)return;
-let n=Number(document.getElementById('guess').value);
-let m=document.getElementById('message');
-if(n<1||n>100||!Number.isInteger(n)){
-m.textContent='أدخل رقمًا من 1 إلى 100';return;
+const $ = id => document.getElementById(id);
+
+let lang = "ar";
+let soundOn = true;
+let audio = null;
+let answer = 0, tries = 0, score = 0, timeLeft = 30;
+let active = false, finished = false, timerId = null;
+
+const levels = {
+  easy: {max:20, attempts:10, time:30, points:100},
+  medium: {max:100, attempts:10, time:30, points:200},
+  hard: {max:500, attempts:12, time:30, points:500}
+};
+
+const words = {
+  ar: {
+    title:"🎯 تخمين الأرقام", subtitle:"اختبر ذكاءك، واخمن الرقم قبل انتهاء الوقت!",
+    level:"المستوى:", easy:"سهل", medium:"متوسط", hard:"صعب",
+    time:"الوقت", tries:"المحاولات", score:"النقاط", best:"أفضل نتيجة",
+    range:"اختر رقمًا من 1 إلى", guess:"خمن 🚀", new:"🔄 لعبة جديدة",
+    ready:"جاهز للتحدي؟ ابدأ الآن!", invalid:"أدخل رقمًا صحيحًا ضمن النطاق المحدد.",
+    higher:"⬆️ الرقم أكبر! حاول مرة أخرى.", lower:"⬇️ الرقم أصغر! حاول مرة أخرى.",
+    win:"🎉 ممتاز! خمنت الرقم الصحيح!", lost:"⏰ انتهى الوقت! حاول مجددًا.",
+    out:"انتهت المحاولات! الرقم الصحيح هو", again:"ابدأ لعبة جديدة لتحدٍّ آخر.",
+    footer:"لعبة نيون — تحدَّ نفسك وحطّم رقمك القياسي!", sound:"🔊 الصوت",
+    muted:"🔇 الصوت مغلق", points:"نقاطك", remain:"المحاولات المتبقية",
+    lang:"EN 🌐", used:"انتهى التحدي، ابدأ لعبة جديدة."
+  },
+  en: {
+    title:"🎯 Number Guessing", subtitle:"Beat the clock and find the secret number!",
+    level:"Level:", easy:"Easy", medium:"Medium", hard:"Hard",
+    time:"Time", tries:"Attempts", score:"Score", best:"Best score",
+    range:"Guess a number from 1 to", guess:"Guess 🚀", new:"🔄 New game",
+    ready:"Ready for a challenge? Let's play!", invalid:"Enter a whole number in the valid range.",
+    higher:"⬆️ Too low! Try again.", lower:"⬇️ Too high! Try again.",
+    win:"🎉 Amazing! You guessed it!", lost:"⏰ Time's up! Try again.",
+    out:"No attempts left! The number was", again:"Start a new game to play again.",
+    footer:"Neon Game — challenge yourself and beat your record!", sound:"🔊 Sound",
+    muted:"🔇 Sound off", points:"Your points", remain:"Attempts left",
+    lang:"عربي 🌐", used:"Challenge over. Start a new game."
+  }
+};
+
+function t(key){ return words[lang][key]; }
+
+function updateLanguage(){
+  document.documentElement.lang = lang === "ar" ? "ar" : "en";
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  ["title","subtitle","levelLabel","timeLabel","triesLabel","scoreLabel",
+   "bestLabel","guessBtn","newBtn","footer"].forEach(id => {
+    const map = {levelLabel:"level",timeLabel:"time",triesLabel:"tries",
+      scoreLabel:"score",bestLabel:"best",guessBtn:"guess",newBtn:"new"};
+    const key = map[id] || id;
+    $(id).textContent = t(key);
+  });
+  $("langBtn").textContent = t("lang");
+  $("soundBtn").textContent = soundOn ? t("sound") : t("muted");
+
+  const level = $("level");
+  [...level.options].forEach(opt => {
+    const v = levels[opt.value];
+    opt.textContent = t(opt.value) + " · 1–" + v.max;
+  });
+  $("guess").placeholder = lang === "ar" ? "رقمك" : "Your guess";
+  $("guess").dir = "ltr";
+  $("rangeText").textContent = t("range") + " " + levels[level.value].max;
+  if (!active && !finished) $("message").textContent = t("ready");
 }
-tries++;
-document.getElementById('tries').textContent=tries;
-if(n===answer){m.textContent='🎉 ممتاز! خمنت الرقم الصحيح!';finished=true;}
-else if(n<answer)m.textContent='⬆️ الرقم أكبر! حاول مرة ثانية';
-else m.textContent='⬇️ الرقم أصغر! حاول مرة ثانية';
+
+function toggleLang(){
+  lang = lang === "ar" ? "en" : "ar";
+  updateLanguage();
 }
-function restart(){
-answer=Math.floor(Math.random()*100)+1;
-tries=0;finished=false;
-document.getElementById('tries').textContent='0';
-document.getElementById('guess').value='';
-document.getElementById('message').textContent='بدأت لعبة جديدة! 🎮';
+
+function toggleSound(){
+  soundOn = !soundOn;
+  $("soundBtn").textContent = soundOn ? t("sound") : t("muted");
+  if(soundOn) playTone(600,0.1);
 }
+
+function playTone(freq,duration){
+  if(!soundOn) return;
+  try{
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if(audio.state === "suspended") audio.resume();
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.08,audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audio.currentTime+duration);
+    osc.connect(gain); gain.connect(audio.destination);
+    osc.start(); osc.stop(audio.currentTime+duration);
+  }catch(e){}
+}
+
+function celebrate(){
+  const area = $("celebration");
+  area.innerHTML = "";
+  const icons = ["🎉","✨","⭐","💎","🎊"];
+  for(let i=0;i<35;i++){
+    const el = document.createElement("span");
+    el.className = "confetti";
+    el.textContent = icons[Math.floor(Math.random()*icons.length)];
+    el.style.left = Math.random()*100 + "%";
+    el.style.animationDelay = Math.random()*0.8 + "s";
+    area.appendChild(el);
+  }
+  setTimeout(()=>area.innerHTML="",3500);
+}
+
+function updateStats(){
+  $("tries").textContent = tries;
+  $("score").textContent = score;
+  $("timer").textContent = timeLeft;
+  $("bar").style.width = Math.max(0,timeLeft/levels[$("level").value].time*100)+"%";
+  $("best").textContent = localStorage.getItem("numberGameBest") || 0;
+}
+
+function endGame(message){
+  active = false;
+  finished = true;
+  clearInterval(timerId);
+  $("message").textContent = message;
+  $("guess").disabled = true;
+  $("guessBtn").disabled = true;
+  $("bar").style.width = "0%";
+}
+
+function startTimer(){
+  clearInterval(timerId);
+  timerId = setInterval(()=>{
+    if(!active) return;
+    timeLeft--;
+    updateStats();
+    if(timeLeft <= 0){
+      endGame(t("lost") + " " + answer + ". " + t("again"));
+      playTone(180,0.35);
+    }
+  },1000);
+}
+
+function newGame(){
+  clearInterval(timerId);
+  const cfg = levels[$("level").value];
+  answer = Math.floor(Math.random()*cfg.max)+1;
+  tries = 0;
+  score = 0;
+  timeLeft = cfg.time;
+  active = true;
+  finished = false;
+  $("guess").disabled = false;
+  $("guessBtn").disabled = false;
+  $("guess").value = "";
+  $("guess").min = 1;
+  $("guess").max = cfg.max;
+  $("message").textContent = t("ready");
+  $("rangeText").textContent = t("range") + " " + cfg.max;
+  updateStats();
+  startTimer();
+  $("guess").focus({preventScroll:true});
+}
+
+$("guessForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  if(!active || finished) return;
+
+  const cfg = levels[$("level").value];
+  const n = Number($("guess").value);
+
+  if(!Number.isInteger(n) || n<1 || n>cfg.max){
+    $("message").textContent = t("invalid");
+    playTone(220,0.15);
+    return;
+  }
+
+  tries++;
+  if(n === answer){
+    const earned = Math.max(10,Math.round(cfg.points*(timeLeft/cfg.time)*(1-(tries-1)/(cfg.attempts*1.5))));
+    score = earned;
+    const oldBest = Number(localStorage.getItem("numberGameBest")||0);
+    if(score>oldBest) localStorage.setItem("numberGameBest",score);
+    updateStats();
+    endGame(t("win")+" +"+score+" "+t("points")+"!");
+    celebrate();
+    [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.18),i*110));
+    return;
+  }
+
+  playTone( n<answer ? 330 : 250,0.12);
+  $("message").textContent = n<answer ? t("higher") : t("lower");
+  $("guess").value = "";
+  updateStats();
+
+  if(tries>=cfg.attempts){
+    endGame(t("out")+" "+answer+". "+t("again"));
+    playTone(180,0.35);
+  }
+});
+
+updateLanguage();
+newGame();
 </script>
 </body>
 </html>
